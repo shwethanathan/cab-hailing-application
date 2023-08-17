@@ -1,4 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug 17 12:22:25 2023
 
+@author: sshwetha
+"""
 
  
 #Function to get user input, returns pickup, drop, vehicle  
@@ -20,7 +26,7 @@ def shortest_distance(locations, adj_matrix, pickup):
     paths={node:[] for node in nodes}
     
     distances[source]=0
-    paths[source].append(pickup) 
+    paths[source].append(source) 
     
     
     def djikstra(adj_matrix, source, unvisited, distances, paths):
@@ -64,16 +70,15 @@ def shortest_distance(locations, adj_matrix, pickup):
         return djikstra(adj_matrix,next_source_node,unvisited,distances,paths)
     
     distances, paths= djikstra(adj_matrix, source, nodes, distances,paths)
-    
     #Converting the nodes back to locations in our output
     op_distances={locations[node]:distance for node,distance in distances.items()}
-    op_paths={locations[node]:path for node,path in paths.items()}
+    op_paths={locations[node]:[locations[i] for i in path] for node,path in paths.items()}
     
     return op_distances, op_paths
 
 #Function to calculate travel time, returns time in minutes 
 def time(dist, speed):
-    return dist/speed*60
+    return dist*60/speed
 
 #Function to calculate fare, returns fare
 def fare(rates, base_dist, base_charges, dist, vehicle):
@@ -92,14 +97,15 @@ def allocation(cabs, distances, vehicle, drop):
     
     #filters cabs of preferred vehicle
     cabs = cabs[cabs["Vehicle"]== vehicle]
-
+    
     ID=None
     
     #finds closest cab
-    for node, distance in distances.items():
-        if node in cabs["Location"]:
-            cabs = cabs[cabs["Location"] == node]
-            ID=cabs.index(cabs["Trip Count"]==max(cabs["Trip Count"]))
+    for location, distance in distances.items():
+        if location in cabs["Location"].tolist():
+            #filter cabs of closest location
+            cabs = cabs[cabs["Location"] == location]
+            ID = cabs[cabs["Trip Count"] == cabs["Trip Count"].min()].index[0]
             break
     
     #If no cab found
@@ -117,17 +123,18 @@ def allocation(cabs, distances, vehicle, drop):
         return cabs.loc[ID, "Driver"],cabs.loc[ID, "Plate no."], cab_location
 
 #Display allocation
-def display(driver, plate, cab_location, waiting, trip_path, trip_distance, trip_time, fare):
+def display_allocation(driver, plate, cab_location, waiting, trip_path, trip_distance, trip_time, fare):
+    print("\n\n-----------------CAB ALLOCATED--------------------")
     print("Driver: ", driver)
     print("Plate no: ",plate)
-    print("Cab location: ",cab_location)
+    print("\nCab location: ",cab_location)
     print("Waiting Time: ", waiting)
-    print("Trip route: ", trip_path[0], end="")
+    print("\nTrip route: ", trip_path[0], end="")
     for node in trip_path[1:]:
         print(" --> ", node, end="") 
-    print("Trip distance: ", trip_distance)
-    print("\nTrip time: ", trip_time)
-    print("Fare: ", fare)
+    print("\nTrip distance: ", trip_distance)
+    print("Trip time: ", trip_time)
+    print("\nTotal Fare: ", fare)
    
 #Removes innaccessible nodes from locations and adj_matrix, return new locations, adj_matrix
 def remove_na_location(locations, adj_matrix, na_locations):
@@ -172,12 +179,13 @@ base_charges = {"mini":40,"sedan":60,"suv":80}
 rates= {"mini":20,"sedan":25,"suv":30}
 base_dist=3 #km
 
-speed= 60 #kmph
+speed= 40 #kmph
 
 #Get Cab data
 cabs=pd.read_excel("/Users/sshwetha/Downloads/cab_data (1).xlsx")
-cabs["Location"] = cabs["Location"].apply(lambda x: x.lower())
-#cabs["Vehicle"] = cabs["Vehicle"].apply(lambda x: x.lower())
+
+cabs["Location"] = cabs["Location"].apply(lambda x: x.upper())
+cabs["Vehicle"] = cabs["Vehicle"].apply(lambda x: x.lower())
 
 
 #------------------------------------------------------------------
@@ -187,11 +195,9 @@ pickup, drop, vehicle= user_input(locations)
 
 #remove inaccessible locations
 adj_matrix, locations= remove_na_location(locations, adj_matrix, na_locations)
-print("Locations removed")
 
 #Gets distances and paths to every node from pickup
 distances, paths = shortest_distance(locations, adj_matrix, pickup)
-print("Distances found")
 
 #Calculate travel distance
 trip_dist= distances[drop]
@@ -199,13 +205,10 @@ trip_dist= distances[drop]
 
 #Calculate Fare
 fare=fare(rates, base_dist, base_charges, trip_dist, vehicle)
-print("Fare and travel distance calculated")
 
 #Allocate Cab
 if allocation(cabs, distances, vehicle, drop)!=None:
     driver, plate, cab_location = allocation(cabs, distances, vehicle, drop)
-    print("Cab Allocated")
-
 
     #Calculate waiting time
     waiting=time(distances[cab_location],speed)
@@ -217,7 +220,22 @@ if allocation(cabs, distances, vehicle, drop)!=None:
     #Calculate trip_path
     trip_path=paths[drop]
     
-    display(driver, plate, cab_location, waiting, trip_path, trip_dist, trip_time, fare)
+    display_allocation(driver, plate, cab_location, waiting, trip_path, trip_dist, trip_time, fare)
 
 else:
     print("No Cab Found")
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+
