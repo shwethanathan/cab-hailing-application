@@ -1,19 +1,45 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Aug 17 12:22:25 2023
 
-@author: sshwetha
-"""
+from fastapi import FastAPI, Request, Form
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+import pandas as pd
+from collections import OrderedDict
 
- 
-#Function to get user input, returns pickup, drop, vehicle  
-def user_input(locations):
-    pickup=input("Enter pick up location: ")
-    drop=input("Enter drop location: ")
-    vehicle=input("Enter vehicle preference: ")
-    return pickup, drop, vehicle
+#----------------------VARIABLE DECLARATIONS------------------------
 
+#Map variables
+locations=["A","B","C","D","E","F","G","H","I","J","K"]
+             #A  B  C  D  E  F  G  H  I  J  K
+adj_matrix=[[ 0,10, 0, 0, 0, 5, 0, 0, 0,10, 0],                 
+            [10, 0, 5, 7, 0, 0, 0, 0, 0, 0, 0],
+            [ 0, 5, 0, 0, 0, 0, 6, 5, 0, 8, 0],
+            [ 0, 7, 0, 0, 8, 0, 0, 0, 0, 4, 0],
+            [ 0, 0, 0, 8, 0, 0, 0, 0, 4, 3, 0],
+            [ 5, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0],
+            [ 0, 0, 6, 0, 0, 9, 0, 9, 0, 0, 0],
+            [ 0, 0, 5, 0, 0, 0, 9, 0, 0, 0, 0],
+            [ 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 7],
+            [ 0, 0, 8, 4, 3, 0, 0, 0, 0, 0, 0],
+            [ 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0]]
+na_locations=["A","D"]
+
+
+#Fare variables 
+base_charges = {"mini":40,"sedan":60,"suv":80}
+rates= {"mini":20,"sedan":25,"suv":30}
+base_dist=3 #km
+
+speed= 40 #kmph
+
+#Get Cab data
+cabs=pd.read_excel("/Users/sshwetha/Downloads/cab_data (1).xlsx")
+
+cabs["Location"] = cabs["Location"].apply(lambda x: x.upper())
+cabs["Vehicle"] = cabs["Vehicle"].apply(lambda x: x.lower())
+
+
+#------------------------------------------------------------------
+    
 #Function to find shortest distance of pick up point to every other node, returns distances, paths
 def shortest_distance(locations, adj_matrix, pickup):
     
@@ -81,7 +107,7 @@ def time(dist, speed):
     return dist*60/speed
 
 #Function to calculate fare, returns fare
-def fare(rates, base_dist, base_charges, dist, vehicle):
+def fare_calculation(rates, base_dist, base_charges, dist, vehicle):
     if dist<=base_dist:
         return base_charges[vehicle]
     else:
@@ -121,20 +147,7 @@ def allocation(cabs, distances, vehicle, drop):
         cabs.loc[ID, "Location"]= drop
             
         return cabs.loc[ID, "Driver"],cabs.loc[ID, "Plate no."], cab_location
-
-#Display allocation
-def display_allocation(driver, plate, cab_location, waiting, trip_path, trip_distance, trip_time, fare):
-    print("\n\n-----------------CAB ALLOCATED--------------------")
-    print("Driver: ", driver)
-    print("Plate no: ",plate)
-    print("\nCab location: ",cab_location)
-    print("Waiting Time: ", waiting)
-    print("\nTrip route: ", trip_path[0], end="")
-    for node in trip_path[1:]:
-        print(" --> ", node, end="") 
-    print("\nTrip distance: ", trip_distance)
-    print("Trip time: ", trip_time)
-    print("\nTotal Fare: ", fare)
+    
    
 #Removes innaccessible nodes from locations and adj_matrix, return new locations, adj_matrix
 def remove_na_location(locations, adj_matrix, na_locations):
@@ -147,95 +160,97 @@ def remove_na_location(locations, adj_matrix, na_locations):
         locations.remove(location) #removes from locations
     
     return adj_matrix, locations
+
+def get_result(
+    request: Request,
+    pickup: str = Form(...),
+    drop: str = Form(...),
+    vehicle: str = Form(...),
+    locations: list = None,
+    adj_matrix: list = None,
+    na_locations: list = None,
+    base_charges: dict = None,
+    rates: dict = None,
+    base_dist: float = None,
+    speed: float = None,
+    cabs: pd.DataFrame = None
+):
     
+    #remove inaccessible nodes
+    adj_matrix, locations= remove_na_location(locations, adj_matrix, na_locations)
+
+    #Gets distances and paths to every node from pickup
+    distances, paths = shortest_distance(locations, adj_matrix, pickup)
+
+
+    #Allocate Cab
+    if allocation(cabs, distances, vehicle, drop)!=None:
+        driver, plate, cab_location = allocation(cabs, distances, vehicle, drop)
+
+        #Calculate waiting time
+        waiting=time(distances[cab_location],speed)
+        
+        #Calculate travel distance
+        trip_dist= distances[drop]
+        
+        #Calculate trip time
+        trip_time=time(trip_dist,speed)
+        
+        #Calculate trip_path
+        trip_path=" --> ".join(paths[drop])
+
+        #Calculate Fare
+        fare=fare_calculation(rates, base_dist, base_charges, trip_dist, vehicle)
+        
+       
     
+
+        
+        return templates.TemplateResponse(
+            "booking-result.html",
+            {"request": request, "driver": driver, "plate": plate,
+             "cab_location": cab_location, "waiting": waiting,
+             "trip_path": trip_path, "trip_distance": trip_dist,
+             "trip_time": trip_time, "fare": fare}
+        )
+
+    else:
+        return 'No cab found'
+
 
 
 #main
-import pandas as pd
-from collections import OrderedDict
-
-#----------------------VARIABLE DECLARATIONS------------------------
-
-#Map variables
-locations=["A","B","C","D","E","F","G","H","I","J","K"]
-             #A  B  C  D  E  F  G  H  I  J  K
-adj_matrix=[[ 0,10, 0, 0, 0, 5, 0, 0, 0,10, 0],                 
-            [10, 0, 5, 7, 0, 0, 0, 0, 0, 0, 0],
-            [ 0, 5, 0, 0, 0, 0, 6, 5, 0, 8, 0],
-            [ 0, 7, 0, 0, 8, 0, 0, 0, 0, 4, 0],
-            [ 0, 0, 0, 8, 0, 0, 0, 0, 4, 3, 0],
-            [ 5, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0],
-            [ 0, 0, 6, 0, 0, 9, 0, 9, 0, 0, 0],
-            [ 0, 0, 5, 0, 0, 0, 9, 0, 0, 0, 0],
-            [ 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 7],
-            [ 0, 0, 8, 4, 3, 0, 0, 0, 0, 0, 0],
-            [ 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0]]
-na_locations=["A","D"]
 
 
-#Fare variables 
-base_charges = {"mini":40,"sedan":60,"suv":80}
-rates= {"mini":20,"sedan":25,"suv":30}
-base_dist=3 #km
 
-speed= 40 #kmph
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
-#Get Cab data
-cabs=pd.read_excel("/Users/sshwetha/Downloads/cab_data (1).xlsx")
+@app.get("/", response_class=HTMLResponse)
+def read_root(request: Request):
+    return templates.TemplateResponse("booking-form.html", {"request": request})
 
-cabs["Location"] = cabs["Location"].apply(lambda x: x.upper())
-cabs["Vehicle"] = cabs["Vehicle"].apply(lambda x: x.lower())
-
-
-#------------------------------------------------------------------
-
-#Get user input
-pickup, drop, vehicle= user_input(locations)
-
-#remove inaccessible locations
-adj_matrix, locations= remove_na_location(locations, adj_matrix, na_locations)
-
-#Gets distances and paths to every node from pickup
-distances, paths = shortest_distance(locations, adj_matrix, pickup)
-
-#Calculate travel distance
-trip_dist= distances[drop]
-
-
-#Calculate Fare
-fare=fare(rates, base_dist, base_charges, trip_dist, vehicle)
-
-#Allocate Cab
-if allocation(cabs, distances, vehicle, drop)!=None:
-    driver, plate, cab_location = allocation(cabs, distances, vehicle, drop)
-
-    #Calculate waiting time
-    waiting=time(distances[cab_location],speed)
+@app.post("/cab-hailing/")
+def show_result( request: Request, pickup: str = Form(...),  drop: str = Form(...), vehicle: str = Form(...) ):
+    result =get_result(
+        request,
+        pickup,
+        drop,
+        vehicle,
+        locations=locations,
+        adj_matrix=adj_matrix,
+        na_locations=na_locations,
+        base_charges=base_charges,
+        rates=rates,
+        base_dist=base_dist,
+        speed=speed,
+        cabs=cabs
+    )
     
-    
-    #Calculate trip time
-    trip_time=time(trip_dist,speed)
-    
-    #Calculate trip_path
-    trip_path=paths[drop]
-    
-    display_allocation(driver, plate, cab_location, waiting, trip_path, trip_dist, trip_time, fare)
-
-else:
-    print("No Cab Found")
-
-
-
-
-
-
+    return result
 
     
 
 
-
-
-
-
-
+    
+    
