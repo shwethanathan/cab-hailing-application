@@ -55,7 +55,10 @@ def shortest_distance(locations, adj_matrix, pickup):
         
         #to trace back if reached a dead end or adjacent unvisited nodes not available
         if next_source_node is None:
-            next_source_node=paths[source][-2]
+            try:
+                next_source_node=paths[source][-2]
+            except:
+                next_source_node=unvisited[0]
             
         return djikstra(adj_matrix,next_source_node,unvisited,distances,paths)
     
