@@ -40,7 +40,7 @@ cabs["Vehicle"] = cabs["Vehicle"].apply(lambda x: x.lower())
 
 #----------------------------FUNCTION DEFINITIONS-------------------
     
-#Function to find shortest distance of pick up point to every other node, returns distances, paths dictionaries
+#FUNCTION TO FIND SHORTEST DISTANCE OF PICK UP POINT TO EVERY OTHER NODE, RETURNS DISTANCES, PATHS DICTIONARIES
 def shortest_distance(locations, adj_matrix, pickup):
     
     #Numbering the locations for ease, we use nodes in djikstra and our output will be in nodes
@@ -102,13 +102,13 @@ def shortest_distance(locations, adj_matrix, pickup):
 
 
 
-#Function to calculate travel time, returns time in minutes 
+#FUNCTION TO CALCULATE TRAVEL TIME, RETURNS TIME IN MINUTES 
 def time(dist, speed):
     return dist*60/speed
 
 
 
-#Function to calculate fare, returns fare
+#FUNCTION TO CALCULATE FARE, RETURNS FARE
 def fare_calculation(rates, base_dist, base_charges, dist, vehicle):
     if dist<=base_dist:
         return base_charges[vehicle]
@@ -117,7 +117,7 @@ def fare_calculation(rates, base_dist, base_charges, dist, vehicle):
 
 
 
-#Function to allocate cab given cab data, returns Driver name, Plate no., Cab Location
+#FUNCTION TO ALLOCATE CAB GIVEN CAB DATA, RETURNS DRIVER NAME, PLATE NO., CAB LOCATION
 def allocation(cabs, distances, vehicle, drop):
     
     #to sort the distances
@@ -149,7 +149,7 @@ def allocation(cabs, distances, vehicle, drop):
 
 
 
-#Removes innaccessible nodes from locations and adj_matrix, returns new locations, new adj_matrix
+#REMOVES INNACCESSIBLE NODES FROM LOCATIONS AND ADJ_MATRIX, RETURNS NEW LOCATIONS, NEW ADJ_MATRIX
 def remove_na_location(locations, adj_matrix, na_locations):
     
     for location in na_locations:
@@ -163,7 +163,7 @@ def remove_na_location(locations, adj_matrix, na_locations):
 
 
 
-#To get complete final result, returns dictionary of values to be passed into html response
+#TO GET COMPLETE FINAL RESULT, RETURNS DICTIONARY OF VALUES TO BE PASSED INTO HTML RESPONSE
 def get_result(
     request: Request,
     pickup: str = Form(...),
