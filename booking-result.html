@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Booking Result</title>
+</head>
+<body>
+    <style>
+      img {
+        float: right;
+      }
+    </style>
+    <img src="/Users/sshwetha/Desktop/static/map.jpg" alt="Map", width= 480, height= 320>
+    <p>Inaccessible nodes: {{ inaccess }}</p>
+    <h1>Booking Result</h1>
+    <p>Driver: {{ driver }}</p>
+    <p>Plate: {{ plate }}</p>
+    <br>
+    <p>Cab Location: {{ cab_location }}</p>
+    <p>Waiting Time: {{ waiting }}</p>
+    <br>
+    <p>Trip Route: {{ trip_path }}</p>
+    <p>Trip Distance: {{ trip_distance }}</p>
+    <p>Trip Time: {{ trip_time }}</p>
+    <br>
+    <p>Total Fare: {{ fare }}</p>
+</body>
+</html>
