@@ -6,39 +6,7 @@ import pandas as pd
 from collections import OrderedDict
 from fastapi.staticfiles import StaticFiles
 
-#----------------------VARIABLE DECLARATIONS------------------------
-
-#Map variables
-locations=["A","B","C","D","E","F","G","H","I","J","K"]
-             #A  B  C  D  E  F  G  H  I  J  K
-adj_matrix=[[ 0,10, 0, 0, 0, 5, 0, 0, 0,10, 0],                 
-            [10, 0, 5, 7, 0, 0, 0, 0, 0, 0, 0],
-            [ 0, 5, 0, 0, 0, 0, 6, 5, 0, 8, 0],
-            [ 0, 7, 0, 0, 8, 0, 0, 0, 0, 4, 0],
-            [ 0, 0, 0, 8, 0, 0, 0, 0, 4, 3, 0],
-            [ 5, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0],
-            [ 0, 0, 6, 0, 0, 9, 0, 9, 0, 0, 0],
-            [ 0, 0, 5, 0, 0, 0, 9, 0, 0, 0, 0],
-            [ 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 7],
-            [ 0, 0, 8, 4, 3, 0, 0, 0, 0, 0, 0],
-            [ 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0]]
-na_locations=["A","D"]
-
-
-#Fare variables 
-base_charges = {"mini":40,"sedan":60,"suv":80}
-rates= {"mini":20,"sedan":25,"suv":30}
-base_dist=3 #km
-
-speed= 40 #kmph
-
-#Get Cab data
-cabs=pd.read_excel("/Users/sshwetha/Downloads/cab_data.xlsx")
-cabs["Location"] = cabs["Location"].apply(lambda x: x.upper())
-cabs["Vehicle"] = cabs["Vehicle"].apply(lambda x: x.lower())
-
-
-#----------------------------FUNCTION DEFINITIONS-------------------
+#-----------------------FUNCTION DEFINITIONS-----------------------
     
 #FUNCTION TO FIND SHORTEST DISTANCE OF PICK UP POINT TO EVERY OTHER NODE, RETURNS DISTANCES, PATHS DICTIONARIES
 def shortest_distance(locations, adj_matrix, pickup):
@@ -119,6 +87,8 @@ def fare_calculation(rates, base_dist, base_charges, dist, vehicle):
 
 #FUNCTION TO ALLOCATE CAB GIVEN CAB DATA, RETURNS DRIVER NAME, PLATE NO., CAB LOCATION
 def allocation(cabs, distances, vehicle, drop):
+    #prints cab data in the terminal for reference
+    print(cabs)
     
     #to sort the distances
     distances={value:key for key,value in distances.items()}  
@@ -178,9 +148,6 @@ def get_result(
     speed: float = None,
     cabs: pd.DataFrame = None
 ):
-    
-    #remove inaccessible nodes
-    adj_matrix, locations= remove_na_location(locations, adj_matrix, na_locations)
 
     #Gets distances and paths to every node from pickup
     distances, paths = shortest_distance(locations, adj_matrix, pickup)
@@ -222,6 +189,41 @@ def get_result(
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 app.mount("/Users/sshwetha/Desktop/static", StaticFiles(directory="static"), name="static")
+
+#------INITIALIZING VARIABLES--------
+#Map variables
+locations=["A","B","C","D","E","F","G","H","I","J","K"]
+             #A  B  C  D  E  F  G  H  I  J  K
+adj_matrix=[[ 0,10, 0, 0, 0, 5, 0, 0, 0,10, 0],                 
+            [10, 0, 5, 7, 0, 0, 0, 0, 0, 0, 0],
+            [ 0, 5, 0, 0, 0, 0, 6, 5, 0, 8, 0],
+            [ 0, 7, 0, 0, 8, 0, 0, 0, 0, 4, 0],
+            [ 0, 0, 0, 8, 0, 0, 0, 0, 4, 3, 0],
+            [ 5, 0, 0, 0, 0, 0, 9, 0, 0, 0, 0],
+            [ 0, 0, 6, 0, 0, 9, 0, 9, 0, 0, 0],
+            [ 0, 0, 5, 0, 0, 0, 9, 0, 0, 0, 0],
+            [ 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 7],
+            [ 0, 0, 8, 4, 3, 0, 0, 0, 0, 0, 0],
+            [ 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 0]]
+na_locations=["A","D"]
+
+#remove inaccessible nodes
+adj_matrix, locations= remove_na_location(locations, adj_matrix, na_locations)
+
+
+#Fare variables 
+base_charges = {"mini":40,"sedan":60,"suv":80}
+rates= {"mini":20,"sedan":25,"suv":30}
+base_dist=3 #km
+
+speed= 40 #kmph
+
+#Get Cab data
+cabs=pd.read_excel("/Users/sshwetha/Downloads/cab_data.xlsx")
+cabs["Location"] = cabs["Location"].apply(lambda x: x.upper())
+cabs["Vehicle"] = cabs["Vehicle"].apply(lambda x: x.lower())
+
+#---------------------------------
 
 
 @app.get("/", response_class=HTMLResponse)
