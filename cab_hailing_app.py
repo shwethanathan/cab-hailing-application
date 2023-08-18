@@ -33,7 +33,7 @@ base_dist=3 #km
 speed= 40 #kmph
 
 #Get Cab data
-cabs=pd.read_excel("/Users/sshwetha/Downloads/cab_data (1).xlsx")
+cabs=pd.read_excel("/Users/sshwetha/Downloads/cab_data.xlsx")
 cabs["Location"] = cabs["Location"].apply(lambda x: x.upper())
 cabs["Vehicle"] = cabs["Vehicle"].apply(lambda x: x.lower())
 
