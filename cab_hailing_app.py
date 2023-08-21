@@ -53,7 +53,7 @@ def shortest_distance(locations, adj_matrix, pickup):
                     next_source_node=node
                     next_source_dist=adj_matrix[source][node]
         
-          #to continue if reached a dead end or adjacent unvisited nodes not available
+        #to continue if reached a dead end or adjacent unvisited nodes not available
          for node in unvisited:
              if distances[node]<next_source_dist:
                 next_source_node=node
