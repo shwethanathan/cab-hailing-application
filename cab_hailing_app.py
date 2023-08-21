@@ -151,11 +151,10 @@ def get_result(
     cabs: pd.DataFrame = None
 ):
 
-    #Gets distances and paths to every node from pickup
-    distances, paths = shortest_distance(locations, adj_matrix, pickup)
-
-    
     try:
+        #Gets distances and paths to every node from pickup
+        distances, paths = shortest_distance(locations, adj_matrix, pickup)
+    
         #Allocate cab
         driver, plate, cab_location = allocation(cabs, distances, vehicle, drop)
 
