@@ -1,5 +1,5 @@
 # cab-hailing-application
-Cab Hailing API Application using FastAPI
+Cab Hailing API Application using FastAPI. I did this one as a sort of assignment given before I started interning. I had to learn FastApi anc create this application in 4 days.
 
 ## Problem Statement
 The aim is  to develop a Cab Hailing API Application that assigns rides to customers based on their location and vehicle preference. The customer will input their present location as well as their preferred vehicle type. Given these, the closest vehicle of the preferred type must be assigned to them.  The customers must be charged a fixed base fare along with additional charges based on the distance traveled. The cab details, fare,  trip route, trip time and waiting time must be displayed to the customer.
